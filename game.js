@@ -4,18 +4,26 @@ const palettes={
   orange:{name:'laranja',colors:['#652500','#a53e00','#d65b00','#f58b24','#ffb95c']},
   violet:{name:'violeta',colors:['#381264','#64239b','#8b3ec4','#b26aed','#d4a0ff']}
 };
-let palette='blue',colors=palettes.blue.colors;
+let palette='blue',shadeByTone=[0,1,2,3,4],colors=palettes.blue.colors;
+function shuffleTones(){
+  const previous=shadeByTone.join(',');
+  const next=[0,1,2,3,4];
+  for(let i=next.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[next[i],next[j]]=[next[j],next[i]]}
+  if(next.join(',')===previous)next.push(next.shift());
+  shadeByTone=next;
+}
+function mutatedTone(t,direction){const shade=Math.max(0,Math.min(4,shadeByTone[t]+direction));return shadeByTone.indexOf(shade)}
 const lineStyles=[[],[10,5],[3,4],[12,4,3,4],[2,3,2,7]];
-const matchedTone=()=>({light:3,medium:2,dark:1})[environment];
+const matchedTone=()=>shadeByTone.indexOf(({light:3,medium:2,dark:1})[environment]);
 function updateLegend(){
   $('legend').replaceChildren();
-  colors.forEach((c,i)=>{const s=document.createElement('span'),dot=document.createElement('i');dot.style.background=c;s.append(dot,`Tom ${i+1}`);s.title=`${palettes[palette].name}, tom ${i+1}: ${i===0?'mais escuro':i===4?'mais claro':'intermediário'}`;$('legend').append(s)});
+  colors.forEach((c,i)=>{const s=document.createElement('span'),dot=document.createElement('i');dot.style.background=c;s.append(dot,`Tom ${i+1}`);s.title=`${palettes[palette].name}, tom ${i+1}: ${shadeByTone[i]===0?'mais escuro':shadeByTone[i]===4?'mais claro':'intermediário'}`;$('legend').append(s)});
 }
 const canvas=$('world'),ctx=canvas.getContext('2d'),chart=$('chart'),cc=chart.getContext('2d');
-let organisms=[],history=[],running=false,paused=false,elapsed=0,captures=0,births=0,last=0,lastSample=0,interval=6,mutate=true,environment='light',initialMean=0;
+let organisms=[],history=[],running=false,paused=false,elapsed=0,captures=0,births=0,last=0,lastSample=0,interval=6,mutate=true,environment='light',initialMean=0,capacityReached=false,capacitySeconds=0;
 const rand=(a,b)=>a+Math.random()*(b-a);
 function organism(t,x=rand(20,940),y=rand(20,520)){return{t,x,y,age:0,vx:rand(-5,5),vy:rand(-5,5)}}
-function mean(){return organisms.length?organisms.reduce((s,o)=>s+o.t,0)/organisms.length:0}
+function mean(){return organisms.length?organisms.reduce((s,o)=>s+shadeByTone[o.t],0)/organisms.length:0}
 function sample(){const counts=colors.map((_,t)=>organisms.filter(o=>o.t===t).length);history.push({time:elapsed,counts,total:organisms.length});drawChart()}
 function drawChart(){
   cc.clearRect(0,0,700,210);cc.setLineDash([]);cc.fillStyle='#42516a';cc.font='11px sans-serif';
@@ -28,7 +36,12 @@ function drawChart(){
 }
 function background(){ctx.fillStyle=colors[matchedTone()];ctx.fillRect(0,0,960,540);let seed=381;for(let i=0;i<1900;i++){seed=(seed*16807)%2147483647;const x=seed%960;seed=(seed*16807)%2147483647;const y=seed%540;ctx.fillStyle=i%2?'#ffffff0b':'#0000000b';ctx.fillRect(x,y,2+i%5,2+i%4)}}
 function draw(){background();for(const o of organisms){ctx.fillStyle=colors[o.t];ctx.beginPath();ctx.arc(o.x,o.y,11,0,Math.PI*2);ctx.fill()}}
-function metrics(){$('pop').textContent=organisms.length;$('caught').textContent=captures;$('born').textContent=births;$('time').textContent=`${Math.ceil(Math.max(0,60-elapsed))}s`}
+function metrics(){$('pop').textContent=organisms.length;$('caught').textContent=captures;$('born').textContent=births;$('time').textContent=`${Math.ceil(Math.max(0,60-elapsed))}s`;
+  const full=organisms.length>=120;
+  const notice=full?'120/120: limite de recursos atingido. Novos nascimentos estão suspensos. Capturas liberam espaço para futuras reproduções.':'O ambiente comporta até 120 organismos. Abaixo desse limite, há espaço para novos nascimentos nos intervalos de reprodução.';
+  if($('capacity-notice').textContent!==notice)$('capacity-notice').textContent=notice;
+  $('capacity-notice').className=full?'capacity-notice is-full':'capacity-notice';
+}
 function survivorCounts(){return colors.map((_,t)=>organisms.filter(o=>o.t===t).length)}
 function drawSurvivors(){
   const counts=survivorCounts(),total=counts.reduce((s,n)=>s+n,0);
@@ -39,6 +52,10 @@ function drawSurvivors(){
   $('bar-plot').innerHTML=`<svg viewBox="0 0 740 305" role="img" aria-label="Sobreviventes por tom. ${summary}" xmlns="http://www.w3.org/2000/svg" style="font-family:Arial,sans-serif"><text x="55" y="23" fill="#42516a" font-size="13">NÚMERO DE SOBREVIVENTES</text>${ticks}${bars}</svg>`;
   $('survivors-total').textContent=`${total} ${total===1?'sobrevivente':'sobreviventes'} no total`;
   $('survivors-summary').textContent=total===0?'População extinta: nenhum indivíduo restou, em nenhum dos cinco tons.':`Cada barra usa a cor do organismo e mostra sua quantidade, não sua porcentagem. ${summary}.`;
+  const extinctTones=counts.map((n,i)=>n===0?i:null).filter(i=>i!==null);
+  $('extinction-announcements').innerHTML=extinctTones.map(i=>`<div class="extinction-badge"><span style="background:${colors[i]}" aria-hidden="true"></span><div><b>Tom ${i+1}: variante extinta nesta população</b><p>Zero indivíduos ao final da partida.</p></div></div>`).join('');
+  $('extinction-heading').textContent=total===0?'Extinção total da população':extinctTones.length?'Variantes que desapareceram':'Todas as variantes deixaram sobreviventes';
+  $('extinction-note').textContent=extinctTones.length?'Cada tom representa uma variante da mesma espécie. A extinção anunciada aqui é o desaparecimento dessa variante da população ao final desta rodada.':'Nenhum dos cinco tons terminou com zero indivíduos.';
   const matched=matchedTone(),largest=Math.max(...counts);
   const leaders=counts.map((n,i)=>n===largest?i+1:null).filter(n=>n!==null);
   const leadNames=leaders.map(n=>`tom ${n}`).join(', ');
@@ -48,7 +65,7 @@ function drawSurvivors(){
   $('survivors').hidden=false;
 }
 function controls(disabled){['palette','environment','initial','rate','mutation'].forEach(id=>$(id).disabled=disabled)}
-function reset(){document.getElementById("survivors").hidden=true;running=false;paused=false;elapsed=0;captures=0;births=0;lastSample=0;history=[];palette=palettes[document.getElementById("palette").value]?document.getElementById("palette").value:'blue';colors=palettes[palette].colors;updateLegend();environment=$('environment').value;interval=Number($('rate').value);mutate=$('mutation').checked;organisms=Array.from({length:Number($('initial').value)},(_,i)=>organism(i%5));initialMean=mean();$('darwin-result').hidden=true;$('start').hidden=false;$('cover').hidden=false;$('cover').querySelector('h2').textContent='Consegue encontrar todos?';$('cover').querySelector('p:not(.eyebrow)').textContent='Clique ou toque nos círculos. Os sobreviventes geram descendentes com cores herdadas.';$('start').textContent='Iniciar experimento ↗';$('pause').disabled=true;$('pause').textContent='Pausar';$('status').textContent='Prepare seu experimento';$('reading').textContent='Inicie uma partida para acompanhar a população.';controls(false);metrics();draw();drawChart()}
+function reset(keepToneOrder=false){document.getElementById("survivors").hidden=true;running=false;paused=false;elapsed=0;captures=0;births=0;lastSample=0;capacityReached=false;capacitySeconds=0;history=[];palette=palettes[document.getElementById("palette").value]?document.getElementById("palette").value:'blue';if(!keepToneOrder)shuffleTones();colors=shadeByTone.map(shade=>palettes[palette].colors[shade]);updateLegend();environment=$('environment').value;interval=Number($('rate').value);mutate=$('mutation').checked;organisms=Array.from({length:Number($('initial').value)},(_,i)=>organism(i%5));initialMean=mean();$('darwin-result').hidden=true;$('start').hidden=false;$('cover').hidden=false;$('cover').querySelector('h2').textContent='Consegue encontrar todos?';$('cover').querySelector('p:not(.eyebrow)').textContent='Clique ou toque nos círculos. Os sobreviventes geram descendentes com cores herdadas.';$('start').textContent='Iniciar experimento ↗';$('pause').disabled=true;$('pause').textContent='Pausar';$('status').textContent='Prepare seu experimento';$('reading').textContent='Inicie uma partida para acompanhar a população.';controls(false);metrics();draw();drawChart()}
 function explainResult(extinct){
   const first=history[0],final=history.at(-1),lastAlive=history.findLast(h=>h.total>0);
   const evidence=extinct?lastAlive:final;
@@ -64,16 +81,17 @@ function explainResult(extinct){
   $('darwin-graph').textContent=`O eixo horizontal marca os segundos; o vertical, a porcentagem da população de cada tom. Uma linha que sobe indica maior participação, mesmo que o número de indivíduos diminua.${extinct?' Na extinção, as linhas param: porcentagens de uma população vazia não são definidas.':''}`;
   const comparison=Math.abs(delta)<.05?`O tom ${matched+1}, que coincide com o fundo, manteve sua proporção.`:`O tom ${matched+1}, que coincide com o fundo, ${delta>0?'ganhou':'perdeu'} ${Math.abs(delta).toFixed(1).replace('.',',')} pontos percentuais.`;
   $('darwin-meaning').textContent=`${comparison} ${births===0?'Não houve nascimentos nesta partida: observamos o efeito das capturas, mas não a transmissão de características a uma nova geração.':'Os descendentes herdaram a cor dos progenitores. Diferenças na sobrevivência e no número de descendentes podem alterar as frequências entre gerações.'} Nenhum indivíduo mudou de cor para se esconder. ${mutate?'As variações nos nascimentos foram aleatórias, não respostas à necessidade. ':''}A camuflagem pode influenciar a captura, mas este resultado sozinho não prova sua causa: posição, suas escolhas e acaso também contam.`;
-  $('darwin-question').textContent=`Minha pergunta: se você repetir com o outro ambiente, mantendo população e intervalo de reprodução, o tom ${matched+1} terá o mesmo resultado? Faça uma previsão e teste!`;
+  $('darwin-resources').textContent=`O limite de 120 organismos representa recursos limitados, como alimento e espaço. Ao atingi-lo, o jogo suspende novos nascimentos. As capturas liberam espaço, e a reprodução pode voltar nas próximas oportunidades. Os cliques não acionam a reprodução. ${capacityReached?`Nesta rodada, o limite foi atingido; a população permaneceu nele por aproximadamente ${capacitySeconds.toFixed(1).replace('.',',')} segundos.`:'Nesta rodada, a população não atingiu esse limite.'} Esse bloqueio é uma simplificação: na natureza, a limitação de recursos pode afetar a reprodução e a mortalidade de diferentes formas.`;
+  $('darwin-question').textContent=`Minha pergunta: se você repetir com outro ambiente, a cor que hoje corresponde ao tom ${matched+1} terá o mesmo resultado? Os números são sorteados em cada rodada: compare as cores, não os números. Faça uma previsão e teste!`;
   $('reading').textContent=extinct?`População extinta aos ${elapsed.toFixed(1).replace('.',',')} s. As curvas mostram proporções apenas enquanto havia indivíduos vivos.`:`De ${first.total} para ${final.total} organismos em 60 s. Leia abaixo a análise de Darwin e compare os tons da legenda.`;
   $('chart').setAttribute('aria-label',`Proporções dos tons da paleta ${palettes[palette].name} ao longo da partida. ${$('darwin-change').textContent}`);
   drawSurvivors();
   $('darwin-result').hidden=false;$('results').scrollIntoView({behavior:'smooth',block:'start'});
 }
 function finish(extinct){running=false;paused=false;sample();$('pause').disabled=true;controls(false);$('status').textContent=extinct?'População extinta':'A população persistiu';$('cover').hidden=false;$('cover').querySelector('h2').textContent=extinct?'Você extinguiu a população.':'A vida continuou.';$('cover').querySelector('p:not(.eyebrow)').textContent=`${captures} capturas · ${births} nascimentos · ${organisms.length} sobreviventes. Veja a análise de Darwin abaixo.`;$('start').textContent='Novo experimento ↗';explainResult(extinct);metrics()}
-function step(dt){elapsed=Math.min(60,elapsed+dt);const newborn=[];for(const o of organisms){o.age+=dt;o.x+=o.vx*dt;o.y+=o.vy*dt;if(o.x<12||o.x>948){o.vx*=-1;o.x=Math.max(12,Math.min(948,o.x))}if(o.y<12||o.y>528){o.vy*=-1;o.y=Math.max(12,Math.min(528,o.y))}if(o.age>=interval){o.age-=interval;if(organisms.length+newborn.length<120){let t=o.t;if(mutate&&Math.random()<.1)t=Math.max(0,Math.min(4,t+(Math.random()<.5?-1:1)));newborn.push(organism(t,Math.max(12,Math.min(948,o.x+rand(-30,30))),Math.max(12,Math.min(528,o.y+rand(-30,30)))));births++}}}organisms.push(...newborn);if(elapsed-lastSample>=1){sample();lastSample=elapsed}metrics();if(elapsed>=60)finish(false)}
+function step(dt){if(organisms.length>=120)capacitySeconds+=Math.min(dt,60-elapsed);elapsed=Math.min(60,elapsed+dt);const newborn=[];for(const o of organisms){o.age+=dt;o.x+=o.vx*dt;o.y+=o.vy*dt;if(o.x<12||o.x>948){o.vx*=-1;o.x=Math.max(12,Math.min(948,o.x))}if(o.y<12||o.y>528){o.vy*=-1;o.y=Math.max(12,Math.min(528,o.y))}if(o.age>=interval){o.age-=interval;if(organisms.length+newborn.length<120){let t=o.t;if(mutate&&Math.random()<.1)t=mutatedTone(t,Math.random()<.5?-1:1);newborn.push(organism(t,Math.max(12,Math.min(948,o.x+rand(-30,30))),Math.max(12,Math.min(528,o.y+rand(-30,30)))));births++}}}organisms.push(...newborn);if(organisms.length>=120)capacityReached=true;if(elapsed-lastSample>=1){sample();lastSample=elapsed}metrics();if(elapsed>=60)finish(false)}
 function frame(now){if(running&&!paused)step(Math.min((now-last)/1000,.1));last=now;draw();requestAnimationFrame(frame)}
-$('start').onclick=()=>{reset();running=true;$('cover').hidden=true;$('pause').disabled=false;controls(true);$('status').textContent='Em andamento · encontre os círculos';sample();last=performance.now()};
+$('start').onclick=()=>{reset(history.length===0&&elapsed===0);running=true;$('cover').hidden=true;$('pause').disabled=false;controls(true);$('status').textContent='Em andamento · encontre os círculos';sample();last=performance.now()};
 $('pause').onclick=()=>{if(!running)return;paused=!paused;$('pause').textContent=paused?'Continuar':'Pausar';$('status').textContent=paused?'Experimento pausado':'Em andamento · encontre os círculos';$('cover').hidden=!paused;if(paused){$('cover').querySelector('h2').textContent='Experimento pausado';$('cover').querySelector('p:not(.eyebrow)').textContent='Use Continuar para retomar a mesma partida.';$('start').hidden=true}else $('start').hidden=false};
 $('reset').onclick=()=>{$('start').hidden=false;reset()};
 canvas.addEventListener('pointerdown',e=>{if(!running||paused)return;const r=canvas.getBoundingClientRect(),x=(e.clientX-r.left)*960/r.width,y=(e.clientY-r.top)*540/r.height;for(let i=organisms.length-1;i>=0;i--){const o=organisms[i];if(Math.hypot(o.x-x,o.y-y)<=13){if(organisms.length===1)sample();organisms.splice(i,1);captures++;metrics();if(!organisms.length)finish(true);break}}});
