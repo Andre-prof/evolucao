@@ -65,11 +65,13 @@ function drawSurvivors(){
   const matched=matchedTone(),largest=Math.max(...counts);
   const leaders=counts.map((n,i)=>n===largest?i+1:null).filter(n=>n!==null);
   const leadNames=leaders.map(n=>`tom ${n}`).join(', ');
-  const observed=total===0?'Nesta partida, todos foram capturados. Nenhum tom deixou sobreviventes.':leaders.length===5?`Nesta partida, todos os tons terminaram empatados, com ${largest} sobreviventes cada.`:leaders.length>1?`Nesta partida, ${leadNames} terminaram empatados com a maior quantidade: ${largest} sobreviventes cada.`:`Nesta partida, o ${leadNames} terminou com mais indivíduos vivos: ${largest}.`;
-  const extinctNames=extinctTones.map(i=>`tom ${i+1}`).join(', ');
-  const extinctSpeech=total===0?'Ocorreu a extinção de toda a população: nenhuma cor teve indivíduos vivos ao final.':extinctTones.length===1?`Em contrapartida, o ${extinctNames} terminou com zero indivíduos vivos. Essa variante foi extinta nesta população.`:extinctTones.length>1?`Em contrapartida, ${extinctNames} terminaram com zero indivíduos vivos. Essas variantes foram extintas nesta população.`:'Todas as cores deixaram indivíduos vivos: nenhuma variante foi extinta nesta rodada.';
-  $('darwin-survival').textContent=`${observed} Esse é o sucesso observado em número de sobreviventes. ${extinctSpeech} O tom ${matched+1} coincide com a cor do ambiente. Ao se confundir com o fundo, tende a ser menos percebido pelo predador e a ter maior chance de sobreviver e deixar descendentes. As barras contam os indivíduos vivos, incluindo descendentes: uma barra maior, sozinha, não mede a chance de sobrevivência. Reprodução, suas capturas e acaso também influenciam o resultado.`;
-  $('darwin-bars').textContent='Aqui, cada barra representa um tom; sua altura e o número acima mostram quantos restaram. Compare essas quantidades para ver o resultado final. Este gráfico não mostra a passagem do tempo.';
+  const observed=total===0?'Nenhum indivíduo sobreviveu: ocorreu a extinção de toda a população.':leaders.length===5?`Todos os tons terminaram empatados, com ${largest} sobreviventes cada.`:leaders.length>1?`${leadNames[0].toUpperCase()+leadNames.slice(1)} empataram com mais sobreviventes: ${largest} cada.`:`O ${leadNames} terminou com mais sobreviventes: ${largest}.`;
+  const extinctNumbers=extinctTones.map(i=>i+1);
+  const extinctNames=extinctNumbers.length>1?extinctNumbers.slice(0,-1).join(', ')+' e '+extinctNumbers.at(-1):String(extinctNumbers[0]);
+  const extinctSpeech=total===0?'':extinctTones.length===1?`A variante do tom ${extinctNames} foi extinta: nenhum indivíduo dessa cor restou.`:extinctTones.length>1?`As variantes dos tons ${extinctNames} foram extintas: nenhum indivíduo dessas cores restou.`:'Nenhuma variante foi extinta.';
+  const camouflage=total>0?`O tom ${matched+1} se confunde com o ambiente, o que pode favorecer sua sobrevivência e reprodução.`:'';
+  $('darwin-survival').textContent=[observed,extinctSpeech,camouflage].filter(Boolean).join(' ');
+  $('darwin-bars').textContent='As barras mostram quantos indivíduos de cada cor restaram.';
   $('survivors').hidden=false;
 }
 function controls(disabled){['palette','environment','initial','rate','mutation'].forEach(id=>$(id).disabled=disabled)}
