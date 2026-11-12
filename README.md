@@ -19,9 +19,9 @@ O gráfico de linhas mostra as proporções dos tons ao longo do tempo. Depois d
 - Fundo da interface claro (azul bem claro) ou escuro, com preferência salva no navegador.
 - Três paletas de ambiente: azul, laranja e violeta; cada uma com claridade clara, intermediária ou escura.
 - Legendas numeradas e traçados distintos no gráfico de linhas.
-- Novos tons são gerados dentro da paleta escolhida a cada nova partida, e a associação entre números e cores também é sorteada; acompanhe a cor, não memorize o número do tom.
+- As cinco cores de cada paleta permanecem as mesmas, mas a associação entre números e cores é sorteada em cada nova partida. O Tom 1 pode ser escuro em uma rodada e claro em outra: acompanhe a cor, não memorize o número.
 - Contagem e cor de cada tom no gráfico de barras, inclusive quando a população é extinta.
-- Anúncio imediato ao capturar o último indivíduo de uma cor, histórico das ocorrências e destaque das variantes que terminam sem sobreviventes. Se uma cor reaparecer por mutação, o jogo informa esse retorno.
+- Anúncio no resultado final para cada variante de cor que terminar com zero sobreviventes.
 - Aviso de limite populacional e explicação de Darwin sobre recursos e suspensão dos nascimentos.
 - Pausa e retomada; pausa automática ao ocultar a página.
 
