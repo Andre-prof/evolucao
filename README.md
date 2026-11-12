@@ -2,7 +2,7 @@
 
 Jogo pedagógico sobre seleção natural, camuflagem e reprodução. O jogador atua como predador e tenta extinguir uma população de organismos geométricos antes de 60 segundos.
 
-[Jogar a versão publicada](https://camuflagem-evolucao-jogos.andre-chemist.chatgpt.site/)
+[Jogar a versão publicada](https://andre-prof.github.io/evolucao/)
 
 ## Como jogar
 
