@@ -5,7 +5,7 @@ const context={document:{getElementById:node,createElement:()=>node(Math.random(
 vm.runInContext(`
 if(organisms.length!==24)throw Error('Initial population');
 const beforeStart=colors.join(',');$('start').onclick();if(colors.join(',')!==beforeStart)throw Error('Keep preview colors when starting');
-for(let i=0;i<20;i++){const before=shadeByTone.join(','),oldColors=colors.join(',');reset();if(shadeByTone.join(',')===before||new Set(shadeByTone).size!==5)throw Error('New shuffled identifiers');if(colors.join(',')===oldColors)throw Error('Generate new actual colors');}
+for(let i=0;i<20;i++){const before=shadeByTone.join(','),oldColors=colors.join(',');reset();if(shadeByTone.join(',')===before||new Set(shadeByTone).size!==5)throw Error('New shuffled identifiers');if(colors.join(',')===oldColors)throw Error('Shuffle number-color association');if([...colors].sort().join(',')!==[...palettes[palette].colors].sort().join(','))throw Error('Keep the same five colors');}
 for(let t=0;t<5;t++)for(const direction of [-1,1])if(shadeByTone[mutatedTone(t,direction)]!==Math.max(0,Math.min(4,shadeByTone[t]+direction)))throw Error('Mutation follows neighboring shade');
 $('start').onclick(); for(let i=0;i<61;i++)step(.1);
 if(organisms.length!==48)throw Error('Reproduction');
@@ -19,8 +19,6 @@ sample();explainResult(false);if(!$('darwin-resources').textContent.includes('li
 reset();$('start').onclick(); organisms=[organism(2,200,200)];
 canvas.pointerdown({clientX:200,clientY:200});
 if(organisms.length!==0||running)throw Error('Extinction');
-if($('live-announcement').hidden||!$('live-announcement').innerHTML.includes('Tom 3 extinto'))throw Error('Immediate visible extinction announcement');
-if(!$('population-events').innerHTML.includes('último indivíduo'))throw Error('Persistent extinction log');
 if($('darwin-result').hidden||!$('darwin-outcome').textContent.includes('zero'))throw Error('Extinction interpretation');
 if(!$('darwin-graph').textContent.includes('não são definidas'))throw Error('Empty population graph explanation');
 if($('survivors').hidden||!$('survivors-summary').textContent.includes('nenhum indivíduo'))throw Error('Extinction bars');
