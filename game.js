@@ -71,7 +71,7 @@ function drawSurvivors(){
   const extinctSpeech=total===0?'':extinctTones.length===1?`A variante do tom ${extinctNames} foi extinta: nenhum indivíduo dessa cor restou.`:extinctTones.length>1?`As variantes dos tons ${extinctNames} foram extintas: nenhum indivíduo dessas cores restou.`:'Nenhuma variante foi extinta.';
   const camouflage=total>0?`O tom ${matched+1} se confunde com o ambiente, o que pode favorecer sua sobrevivência e reprodução.`:'';
   $('darwin-survival').textContent=[observed,extinctSpeech,camouflage].filter(Boolean).join(' ');
-  $('darwin-bars').textContent='As barras mostram quantos indivíduos de cada cor restaram.';
+  $('darwin-bars').textContent='Cada barra mostra quantos indivíduos de uma cor restaram, incluindo os descendentes. Uma barra mais alta indica uma população final maior, mas não demonstra, por si só, maior chance de sobrevivência: o resultado também depende da reprodução, das capturas e do acaso.';
   $('survivors').hidden=false;
 }
 function controls(disabled){['palette','environment','initial','rate','mutation'].forEach(id=>$(id).disabled=disabled)}
