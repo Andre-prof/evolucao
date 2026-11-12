@@ -19,7 +19,10 @@ O gráfico de linhas mostra as proporções dos tons ao longo do tempo. Depois d
 - Fundo da interface claro (azul bem claro) ou escuro, com preferência salva no navegador.
 - Três paletas de ambiente: azul, laranja e violeta; cada uma com claridade clara, intermediária ou escura.
 - Legendas numeradas e traçados distintos no gráfico de linhas.
+- A associação entre números e cores é sorteada em cada nova partida; acompanhe a cor, não memorize o número do tom.
 - Contagem e cor de cada tom no gráfico de barras, inclusive quando a população é extinta.
+- Anúncios das variantes que terminam sem sobreviventes.
+- Aviso de limite populacional e explicação de Darwin sobre recursos e suspensão dos nascimentos.
 - Pausa e retomada; pausa automática ao ocultar a página.
 
 ## Executar localmente
@@ -49,6 +52,10 @@ As verificações abrangem reprodução, limite populacional, extinção, pausa,
 Cada organismo tem um tom herdável que permanece constante durante sua vida. A reprodução é assexuada e simplificada: cada sobrevivente pode gerar um descendente por intervalo. Quando ativada, a variação sorteia um tom vizinho em 10% dos nascimentos; nos extremos da escala, o tom pode permanecer igual.
 
 A camuflagem pode dificultar a captura. A quantidade final de indivíduos inclui descendentes e não equivale, sozinha, à probabilidade de sobrevivência. As escolhas do jogador, a posição dos organismos e o acaso também influenciam os resultados. Repetir partidas e controlar as condições permite comparar hipóteses.
+
+Os cinco tons representam variantes da mesma espécie. Quando um tom termina com zero indivíduos, o jogo anuncia a extinção dessa variante na população ao final da rodada. As mutações continuam seguindo tons vizinhos em claridade, mesmo com a numeração embaralhada.
+
+O limite de 120 organismos representa alimento e espaço limitados. Ao atingi-lo, o jogo suspende novos nascimentos. As capturas liberam espaço para nascimentos nas próximas oportunidades de reprodução; clicar não aciona diretamente a reprodução. O bloqueio é uma simplificação pedagógica, e Darwin indica se esse limite foi atingido na rodada.
 
 ## Arquivos
 
